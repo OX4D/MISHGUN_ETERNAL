@@ -94,13 +94,13 @@ function update() {
     }
 
     for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].y -= 5;
+        bullets[i].y -= 15;
 
         for (let j = enemies.length - 1; j >= 0; j--) {
             if (checkBulletCollision(bullets[i], enemies[j])) {
                 bullets.splice(i, 1);
                 enemies.splice(j, 1);
-                score += 100;
+                score += 15;
                 break;
             }
         }
