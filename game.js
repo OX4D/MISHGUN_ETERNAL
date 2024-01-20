@@ -19,6 +19,7 @@ let enemies = [];
 let bonuses = [];
 let score = 0;
 let level = 1;
+let gameStarted = false;
 
 const enemyTextures = [
     'path_to_enemy_image_1.png',
@@ -99,6 +100,13 @@ function handleShooting() {
 }
 
 function update() {
+    if (!gameStarted) {
+        ctx.fillStyle = "white";
+        ctx.font = "30px 'Bicubik', cursive"; // измененный шрифт
+        ctx.fillText("Нажми ЛКМ, чтобы начать", canvas.width / 2 - 200, canvas.height / 2);
+        return requestAnimationFrame(update);
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawPlayer();
@@ -152,7 +160,7 @@ function update() {
     }
 
     ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
+    ctx.font = "20px 'Bicubik', cursive"; // измененный шрифт
     ctx.fillText("Фраги: " + score, 10, 30);
     ctx.fillText("Твой лвл: " + level, 10, 60);
 
@@ -207,6 +215,7 @@ document.addEventListener("mousemove", event => {
 });
 
 document.addEventListener("mousedown", () => {
+    gameStarted = true;
     handleShooting();
     shootingInterval = setInterval(handleShooting, 100 / player.shootingSpeed);
 });
