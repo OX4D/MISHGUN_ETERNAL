@@ -100,7 +100,7 @@ function update() {
             if (checkBulletCollision(bullets[i], enemies[j])) {
                 bullets.splice(i, 1);
                 enemies.splice(j, 1);
-                score += 15;
+                score += 1;
                 break;
             }
         }
