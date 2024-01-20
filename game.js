@@ -10,11 +10,13 @@ const player = {
     size: 70,
     speed: 5,
     texture: new Image(),
+    shootingSpeed: 1,
 };
-player.texture.src = 'path_to_player_image.png'; // Замените 'path_to_player_image.png' на путь к изображению игрока
+player.texture.src = 'path_to_player_image.png';
 
 const bullets = [];
 let enemies = [];
+let bonuses = [];
 let score = 0;
 let level = 1;
 
@@ -28,10 +30,13 @@ const enemyTextures = [
     'path_to_enemy_image_7.png',
 ];
 
-// Добавлено: создаем элемент аудио и указываем путь к музыке
-const backgroundMusic = new Audio('path_to_background_music.ogg'); // Замените 'path_to_background_music.mp3' на путь к вашему аудиофайлу
-backgroundMusic.loop = true; // Зацикливаем музыку
-backgroundMusic.volume = 0.5; // Устанавливаем громкость
+const bonusTextures = [
+    'path_to_bonus_image.png',
+];
+
+const backgroundMusic = new Audio('path_to_background_music.ogg');
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.5;
 
 function playBackgroundMusic() {
     backgroundMusic.play();
@@ -39,14 +44,14 @@ function playBackgroundMusic() {
 
 function stopBackgroundMusic() {
     backgroundMusic.pause();
-    backgroundMusic.currentTime = 0; // Сбрасываем время воспроизведения
+    backgroundMusic.currentTime = 0;
 }
 
 function createEnemy() {
     const randomTextureIndex = Math.floor(Math.random() * enemyTextures.length);
     const enemyTexture = new Image();
     enemyTexture.src = enemyTextures[randomTextureIndex];
-    
+
     return {
         x: Math.random() * canvas.width,
         y: 0,
@@ -54,6 +59,30 @@ function createEnemy() {
         speed: 3 + level * 0.5,
         texture: enemyTexture,
     };
+}
+
+function createBonus() {
+    const randomTextureIndex = Math.floor(Math.random() * bonusTextures.length);
+    const bonusTexture = new Image();
+    bonusTexture.src = bonusTextures[randomTextureIndex];
+
+    return {
+        x: Math.random() * canvas.width,
+        y: 0,
+        size: 30,
+        bonusType: 'speedUp',
+        texture: bonusTexture,
+    };
+}
+
+function applyBonus(player, bonus) {
+    if (bonus.bonusType === 'speedUp') {
+        player.shootingSpeed = 10;
+
+        setTimeout(() => {
+            player.shootingSpeed = 1;
+        }, 5000);
+    }
 }
 
 let shootingInterval;
@@ -65,7 +94,7 @@ function handleShooting() {
         canShoot = false;
         setTimeout(() => {
             canShoot = true;
-        }, 100); // Ожидание 100 миллисекунд перед следующим выстрелом
+        }, 100 / player.shootingSpeed);
     }
 }
 
@@ -74,9 +103,15 @@ function update() {
 
     drawPlayer();
     drawBullets();
+    drawEnemies();
+    drawBonuses();
 
     if (Math.random() < 0.02 + level * 0.005) {
         enemies.push(createEnemy());
+    }
+
+    if (Math.random() < 0.005) {
+        bonuses.push(createBonus());
     }
 
     for (let i = enemies.length - 1; i >= 0; i--) {
@@ -86,7 +121,7 @@ function update() {
         if (!checkCollision(player, enemy)) {
             drawEnemies();
         } else {
-            stopBackgroundMusic(); // Добавлено: останавливаем музыку при завершении игры
+            stopBackgroundMusic();
             alert("ТЫ ПРОСРАЛ! Настрелял фрагов: " + score + " ЛВЛ: " + level);
             document.location.reload();
             return;
@@ -106,14 +141,22 @@ function update() {
         }
     }
 
-    drawEnemies();
+    for (let i = bonuses.length - 1; i >= 0; i--) {
+        const bonus = bonuses[i];
+        bonus.y += 3;
+
+        if (checkCollision(player, bonus)) {
+            applyBonus(player, bonus);
+            bonuses.splice(i, 1);
+        }
+    }
 
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
     ctx.fillText("Фраги: " + score, 10, 30);
     ctx.fillText("Твой лвл: " + level, 10, 60);
 
-    if (score >= level * 100) {
+    if (score >= level * 10) {
         level++;
         enemies = [];
     }
@@ -140,6 +183,12 @@ function drawEnemies() {
     });
 }
 
+function drawBonuses() {
+    bonuses.forEach(bonus => {
+        ctx.drawImage(bonus.texture, bonus.x - bonus.size / 2, bonus.y - bonus.size / 2, bonus.size, bonus.size);
+    });
+}
+
 function checkCollision(player, enemy) {
     const distance = Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2);
     return distance < player.size / 2 + enemy.size / 2;
@@ -150,7 +199,6 @@ function checkBulletCollision(bullet, enemy) {
     return distance < 5 + enemy.size / 2;
 }
 
-// Добавлено: начинаем воспроизведение музыки при загрузке страницы
 playBackgroundMusic();
 
 document.addEventListener("mousemove", event => {
@@ -160,7 +208,7 @@ document.addEventListener("mousemove", event => {
 
 document.addEventListener("mousedown", () => {
     handleShooting();
-    shootingInterval = setInterval(handleShooting, 100);
+    shootingInterval = setInterval(handleShooting, 100 / player.shootingSpeed);
 });
 
 document.addEventListener("mouseup", () => {
