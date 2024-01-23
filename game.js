@@ -39,6 +39,9 @@ const backgroundMusic = new Audio('path_to_background_music.ogg');
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.5;
 
+let scores = {};
+const enemyNames = ["Димцов К", "Темцов", "Димцов Б", "Артурцов", "Никитцов", "Саньцов", "Костьцов"];
+
 function playBackgroundMusic() {
     backgroundMusic.play();
 }
@@ -53,12 +56,15 @@ function createEnemy() {
     const enemyTexture = new Image();
     enemyTexture.src = enemyTextures[randomTextureIndex];
 
+    const enemyName = enemyNames[randomTextureIndex];
+
     return {
         x: Math.random() * canvas.width,
         y: 0,
         size: 70,
         speed: 3 + level * 0.5,
         texture: enemyTexture,
+        name: enemyName,
     };
 }
 
@@ -73,6 +79,7 @@ function createBonus() {
         size: 30,
         bonusType: 'speedUp',
         texture: bonusTexture,
+        speed: 3, // Скорость движения бонуса вниз
     };
 }
 
@@ -102,7 +109,7 @@ function handleShooting() {
 function update() {
     if (!gameStarted) {
         ctx.fillStyle = "white";
-        ctx.font = "30px 'Gotham Pro Black', cursive"; // измененный шрифт
+        ctx.font = "30px 'Arial', cursive";
         ctx.fillText("Нажми ЛКМ, чтобы начать", canvas.width / 2 - 200, canvas.height / 2);
         return requestAnimationFrame(update);
     }
@@ -122,6 +129,27 @@ function update() {
         bonuses.push(createBonus());
     }
 
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= 15;
+    
+        let enemyKilled = false; // Флаг, указывающий, что враг был убит этой пулей
+    
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            if (checkBulletCollision(bullets[i], enemies[j])) {
+                bullets.splice(i, 1);
+                // Увеличиваем общий счёт только если враг не был убит этой пулей ранее
+                if (!enemyKilled) {
+                    score++;
+                    enemyKilled = true;
+                }
+                // Увеличиваем счёт для конкретного типа врага
+                scores[enemies[j].name] = (scores[enemies[j].name] || 0) + 1;
+                enemies.splice(j, 1);
+                break;
+            }
+        }
+    }   
+    
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
         enemy.y += enemy.speed;
@@ -130,22 +158,9 @@ function update() {
             drawEnemies();
         } else {
             stopBackgroundMusic();
-            alert("ТЫ ПРОСРАЛ! Настрелял фрагов: " + score + " ЛВЛ: " + level);
+            alert(`ТЫ ПРОСРАЛ! Настрелял фрагов: ${getTotalScore()} ЛВЛ: ${level}`);
             document.location.reload();
             return;
-        }
-    }
-
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].y -= 15;
-
-        for (let j = enemies.length - 1; j >= 0; j--) {
-            if (checkBulletCollision(bullets[i], enemies[j])) {
-                bullets.splice(i, 1);
-                enemies.splice(j, 1);
-                score += 1;
-                break;
-            }
         }
     }
 
@@ -160,7 +175,7 @@ function update() {
     }
 
     ctx.fillStyle = "white";
-    ctx.font = "20px 'Gotham Pro Black', cursive"; // измененный шрифт
+    ctx.font = "20px 'Arial', cursive";
     ctx.fillText("Фраги: " + score, 10, 30);
     ctx.fillText("Твой лвл: " + level, 10, 60);
 
@@ -169,7 +184,24 @@ function update() {
         enemies = [];
     }
 
+    // Вывод счета врагов
+    let yOffset = 100;
+    for (const enemyName of enemyNames) {
+        const enemyScore = scores[enemyName] || 0;
+        ctx.fillText(`${enemyName}: ${enemyScore}`, 10, yOffset);
+        yOffset += 20;
+    }
+
     requestAnimationFrame(update);
+}
+
+function getTotalScore() {
+    let totalScore = 0;
+    for (const enemyName of enemyNames) {
+        const enemyScore = scores[enemyName] || 0;
+        totalScore += enemyScore;
+    }
+    return totalScore;
 }
 
 function drawPlayer() {
