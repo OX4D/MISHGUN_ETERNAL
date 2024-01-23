@@ -40,7 +40,7 @@ backgroundMusic.loop = true;
 backgroundMusic.volume = 0.5;
 
 let scores = {};
-const enemyNames = ["Димцов К", "Темцов", "Димцов Б", "Артурцов", "Никитцов", "Саньцов", "Костьцов"];
+const enemyNames = ["Димцов", "Темцов", "Брайнцов", "Артурцов", "Никитцов", "Саньцов", "Костьцов"];
 
 function playBackgroundMusic() {
     backgroundMusic.play();
